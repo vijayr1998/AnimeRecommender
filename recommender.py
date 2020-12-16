@@ -9,8 +9,20 @@ Original file is located at
 
 # Keep this code cell here
 # Project title will be used by the reviewer
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import linear_kernel
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+import matplotlib.pyplot as plt
+import matplotlib
+import numpy as np
+import pandas as pd
+
+from os import system, name
+
+
 PROJECT_TITLE = "Recommending Anime Based on Watch History"
-NOTEBOOK_ID   = "1koV9jr0QzMv_QV2dbvVDMbT7rhIQLlhX"
+NOTEBOOK_ID = "1koV9jr0QzMv_QV2dbvVDMbT7rhIQLlhX"
 VERSION = "FA20.10.10.2020"
 
 """
@@ -33,16 +45,6 @@ To begin this project, we begin by including the standard data science libraries
 The anime recommender requires TF-IDF work as well as cosine similarity metrics in order to build models and define how entries (here, anime) are similar to each other in order to give recommendations to the user. 
 """
 
-import pandas as pd
-import numpy as np
-
-import matplotlib
-import matplotlib.pyplot as plt
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics.pairwise import linear_kernel
-from sklearn.metrics.pairwise import cosine_similarity
 
 """
 # Data Acquisition, Selection, Cleaning
@@ -53,13 +55,16 @@ The `install_data()` function uses a Google Drive URL to download a csv into a P
 
 """
 
-def install_data():   
-  # Taken from https://www.kaggle.com/canggih/anime-data-score-staff-synopsis-and-genre/data/
-  df = pd.read_csv("http://drive.google.com/uc?export=download&id=1rj1wC5FyELyaigmIYkzxZuhNLs39rFJL")
-  return df
+
+def install_data():
+    # Taken from https://www.kaggle.com/canggih/anime-data-score-staff-synopsis-and-genre/data/
+    df = pd.read_csv(
+        "http://drive.google.com/uc?export=download&id=1rj1wC5FyELyaigmIYkzxZuhNLs39rFJL")
+    return df
+
 
 df = install_data()
-#df.head()
+# df.head()
 
 """
 ## Selection and Cleaning
@@ -79,46 +84,49 @@ This soup is necessary as there may be names or keywords that are similar (perha
 After doing this to several columns, the `create_soup()` sub-function mashes all these soupy columns together to use in the `CountVectorizer`. 
 """
 
+
 def observe_data(df):
-  print(df.isna().sum())
+    print(df.isna().sum())
+
 
 def clean_data(df):
 
-  # Drop any rows with missing values as this data is un-imputable
-  df = df.dropna()
+    # Drop any rows with missing values as this data is un-imputable
+    df = df.dropna()
 
-  # Convert genre entries from string to list of strings
+    # Convert genre entries from string to list of strings
 
-  df = df.drop(['Type', 'Status', 'End airing', 'Starting season', \
-                'Broadcast time', 'Producers', 'Sources', 'Duration', \
-                'Members', "Favorites", 'Scored by', 'Score', 'Rating'], axis=1)
+    df = df.drop(['Type', 'Status', 'End airing', 'Starting season',
+                  'Broadcast time', 'Producers', 'Sources', 'Duration',
+                  'Members', "Favorites", 'Scored by', 'Score', 'Rating'], axis=1)
 
-  # "Action,Drama,Romance" -> ["Action", "Drama", "Romance"]
-  def split_on_comma(col):
-    old = list(df[col])
-    new = [g.split(',') for g in old]
+    # "Action,Drama,Romance" -> ["Action", "Drama", "Romance"]
+    def split_on_comma(col):
+        old = list(df[col])
+        new = [g.split(',') for g in old]
 
-    df.drop(col, axis=1, inplace=True)
-    df[col] = new
+        df.drop(col, axis=1, inplace=True)
+        df[col] = new
 
-  # "actiondramaromance, .."
-  def mesh(l):
-    return [str.lower(i.replace(" ", '')) for i in l]
+    # "actiondramaromance, .."
+    def mesh(l):
+        return [str.lower(i.replace(" ", '')) for i in l]
 
-  to_change = ['Genres', 'Licensors', 'Studios', 'Description']
+    to_change = ['Genres', 'Licensors', 'Studios', 'Description']
 
-  for col in to_change:
-    split_on_comma(col)
-    df[col] = df[col].apply(mesh)
+    for col in to_change:
+        split_on_comma(col)
+        df[col] = df[col].apply(mesh)
 
-  # Creates a word soup of many different columns for the Vectorizer
-  def create_soup(df):
-    return ' '.join(df['Description']) + ' ' + ' '.join(df['Genres']) + ' ' + \
-    ' '.join(df['Studios']) + ' ' + ' '.join(df['Licensors'])
+    # Creates a word soup of many different columns for the Vectorizer
+    def create_soup(df):
+        return ' '.join(df['Description']) + ' ' + ' '.join(df['Genres']) + ' ' + \
+            ' '.join(df['Studios']) + ' ' + ' '.join(df['Licensors'])
 
-  df['Soup'] = df.apply(create_soup, axis=1)
-  
-  return df 
+    df['Soup'] = df.apply(create_soup, axis=1)
+
+    return df
+
 
 new_df = clean_data(df.copy())
 
@@ -132,7 +140,7 @@ The columns contain pertinent information such as the name of the anime, the num
 The licensor I kept as I could use it in the "soup" to give an idea to the user where they can stream the anime, i.e. Funimation or Crunchyroll. 
 """
 
-#new_df.head()
+# new_df.head()
 
 """
 # Data Analysis
@@ -150,18 +158,23 @@ I use `CountVectorizer()` instead of `TfidfVectorizer()` because TF-IDF would re
 After this, I build a cosine similarity matrix that gives a sense of how anime could be similar based on the model and how similar each anime is to each other. 
 """
 
+
 def build_tfidf_matrix(df):
-  vec = CountVectorizer(stop_words='english')
-  matrix = vec.fit_transform(df['Soup'])
-  return matrix
+    vec = CountVectorizer(stop_words='english')
+    matrix = vec.fit_transform(df['Soup'])
+    return matrix
+
 
 matrix = build_tfidf_matrix(new_df)
 
+
 def build_cossim(df):
-  cossim = cosine_similarity(matrix, matrix)
-  #Construct a reverse map of indices and anime titles
-  indices = pd.Series(df.index, index=df['Title'])
-  return cossim, indices
+    cossim = cosine_similarity(matrix, matrix)
+    # Construct a reverse map of indices and anime titles
+    indices = pd.Series(df.index, index=df['Title'])
+    return cossim, indices
+
+
 cossim, indices = build_cossim(new_df)
 
 """
@@ -170,71 +183,76 @@ cossim, indices = build_cossim(new_df)
 get_recommendations() is the function that builds all the fun stuff for the user to see: their list of recommended anime. 
 """
 
+
 def get_recommendations(title, n=10, nsfw=False, prefer_finished=False, cossim=cossim, debug=False):
 
-  try:
-    idx = indices[title] # get index of anime from df that matches title 
-  except KeyError:
-    return "We couldn't find that anime. Please try another!"
+    try:
+        idx = indices[title]  # get index of anime from df that matches title
+    except KeyError:
+        return "We couldn't find that anime. Please try another!"
 
-  # get cos-sim scores of all other anime wrt `title` anime 
-  scores = list(enumerate(cossim[idx]))
+    # get cos-sim scores of all other anime wrt `title` anime
+    scores = list(enumerate(cossim[idx]))
 
-  # Sort anime in descending order based on cos-sim scores
-  scores = sorted(scores, key=lambda x: x[1], reverse=True)
+    # Sort anime in descending order based on cos-sim scores
+    scores = sorted(scores, key=lambda x: x[1], reverse=True)
 
-  assert n > 0, "Please choose a number greater than 0"
-  scores = scores[1:(n + 1)]  # Return n anime 
+    assert n > 0, "Please choose a number greater than 0"
+    scores = scores[1:(n + 1)]  # Return n anime
 
-  idxs = [i[0] for i in scores] # get anime indices
-  final_df = df.iloc[idxs]
+    idxs = [i[0] for i in scores]  # get anime indices
+    final_df = df.iloc[idxs]
 
-  if nsfw:
-    final_df = final_df[final_df['Rating'] != 'R']
-   
-  if prefer_finished:
-    final_df = final_df[final_df['Status'] == 'Finished Airing']
-  
-  #https://www.datacamp.com/community/tutorials/recommender-systems-python
-  # WR = (v/(v+m) * R) + (m/(v + m) * C) => IMBD's Weighted Ranking formula 
-  C = final_df['Score'].mean()
-  if debug:
-    print("C: ", C)
-  m = final_df['Scored by'].quantile(0.25)
-  if debug:
-    print("M: ", m)
-  final_df = final_df[final_df['Scored by'] >= m]
+    if nsfw:
+        final_df = final_df[final_df['Rating'] != 'R']
 
-  v = final_df['Scored by']
-  R = final_df['Score']
-  
-  final_df['Weighted score'] = (v/(v+m) * R) + (m/(m + v) * C)
-  final_df = final_df.sort_values('Weighted score', ascending=False)
-  
+    if prefer_finished:
+        final_df = final_df[final_df['Status'] == 'Finished Airing']
 
-  return final_df[['Title', 'Type', 'Status', 'Start airing', 'Licensors',\
-                   'Studios', 'Genres', 'Rating', 'Weighted score']]\
-                   .reset_index().drop('index', axis=1)
+    # https://www.datacamp.com/community/tutorials/recommender-systems-python
+    # WR = (v/(v+m) * R) + (m/(v + m) * C) => IMBD's Weighted Ranking formula
+    C = final_df['Score'].mean()
+    if debug:
+        print("C: ", C)
+    m = final_df['Scored by'].quantile(0.25)
+    if debug:
+        print("M: ", m)
+    final_df = final_df[final_df['Scored by'] >= m]
 
-# Where the user can get recommendations 
+    v = final_df['Scored by']
+    R = final_df['Score']
+
+    final_df['Weighted score'] = (v/(v+m) * R) + (m/(m + v) * C)
+    final_df = final_df.sort_values('Weighted score', ascending=False)
+
+    return final_df[['Title', 'Type', 'Status', 'Start airing', 'Licensors',
+                     'Studios', 'Genres', 'Rating', 'Weighted score']]\
+        .reset_index().drop('index', axis=1)
+
+# Where the user can get recommendations
+
+
 def recommend():
-  df = install_data()
-  new_df = clean_data(df)
-  matrix = build_tfidf_matrix(new_df)
-  cossim, indices = build_cossim(df)
+    df = install_data()
+    new_df = clean_data(df)
+    matrix = build_tfidf_matrix(new_df)
+    cossim, indices = build_cossim(df)
 
-  print("What anime did you like in the past?")
-  title = str(input())
-  print("Would you prefer to keep the age rating appropriate? y/n")
-  nsfw_bool = True if str(input()) == "y" else False
-  print("Do you prefer finished anime only? y/n")
-  finished_bool = True if str(input()) == 'y' else False
-  print("Finally, up to how many anime recommendations would you like to see?")
-  num = int(input())
-  print("Generating recommendations for you! ...")
+    print("What anime did you like in the past?")
+    title = str(input())
+    print("Would you prefer to keep the age rating appropriate? y/n")
+    nsfw_bool = True if str(input()) == "y" else False
+    print("Do you prefer finished anime only? y/n")
+    finished_bool = True if str(input()) == 'y' else False
+    print("Finally, up to how many anime recommendations would you like to see?")
+    num = int(input())
+    print("Generating recommendations for you! ...")
 
-  return get_recommendations(title, n=num, nsfw=nsfw_bool, prefer_finished=finished_bool)
+    print(get_recommendations(title, n=num,
+                              nsfw=nsfw_bool, prefer_finished=finished_bool))
 
+
+_ = system('clear')
 recommend()
 
 """
