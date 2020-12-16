@@ -26,41 +26,7 @@ The dataset itself was sourced from Kaggle, with the URL given below in the code
 
 The csv dataset will be downloaded by pandas `read_csv()` function. 
 
-<!-- this is a comment -->
-<!-- 
-
-   VIDEO INSTRUCTIONS
-
-1. upload to google drive, get the share URL
-https://drive.google.com/file/d/1yGvY5a0KAqnOKf5kLh5EbbbRY4_LonAX
-
-2. convert to export URL:
-http://drive.google.com/uc?export=download&id=1yGvY5a0KAqnOKf5kLh5EbbbRY4_LonAX
-
-3. OR use some other service to host your video:
-https://storage.googleapis.com/uicourse/videos/dmap/Exact%20Instructions%20Challenge%20-%20THIS%20is%20why%20my%20kids%20hate%20me.%20%20Josh%20Darnit.mp4
-
-replace the src="YOUR VIDEO URL" in the <source> tag in the next cell below
--->"""
-
-# Commented out IPython magic to ensure Python compatibility.
-# %%html
-# <!-- this should be the ONLY html cell in the notebook: use markdown -->
-# <div style="font-size:36px; max-width:800px; font-family:Times, serif;">
-#  INFO 490 Final Project -- Anime Recommender
-# <!--
-# <video width="600" controls>
-#   <source src="https://drive.google.com/file/d/1S8-5T1OsQeLQwaYR_Nomzd9ANpbw-7vj/view?usp=sharing"
-#   type="video/mp4">
-# </video>
-# -->
-# <iframe width="560" height="315" src="https://www.youtube.com/embed/0ySOsNMHEuQ" \
-# frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-# </iframe>
-# 
-# </div>
-
-"""# Imports
+"https://www.youtube.com/embed/0ySOsNMHEuQ"
 
 To begin this project, we begin by including the standard data science libraries `numpy` and `pandas`.
 
@@ -78,7 +44,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 
-"""# Data Acquisition, Selection, Cleaning
+"""
+# Data Acquisition, Selection, Cleaning
 
 ## Acquisition
 
@@ -92,9 +59,10 @@ def install_data():
   return df
 
 df = install_data()
-df.head()
+#df.head()
 
-"""## Selection and Cleaning
+"""
+## Selection and Cleaning
 
 This portion of code will clean the dataset and manipulate the data into something more usable. 
 
@@ -154,7 +122,8 @@ def clean_data(df):
 
 new_df = clean_data(df.copy())
 
-"""# Data Exploration
+"""
+# Data Exploration
 
 This is a very detailed dataset of anime, though it is not very big. It has many columns of data for those who wish to use them, but for simplicity I have removed much of the columns. 
 
@@ -163,11 +132,13 @@ The columns contain pertinent information such as the name of the anime, the num
 The licensor I kept as I could use it in the "soup" to give an idea to the user where they can stream the anime, i.e. Funimation or Crunchyroll. 
 """
 
-new_df.head()
+#new_df.head()
 
-"""# Data Analysis
+"""
+# Data Analysis
 
 ## Building the Model
+
 My goal is to recommend similar anime to an anime list passed in. However, I will consider multiple data points other than genre. I will consider plot, licensor, and studio to decide on what anime to recommend to the user. 
 
 The model would be trained on the data points listed in the analysis section. I would train the model to favor shows with similar genres and plots. 
@@ -175,13 +146,8 @@ The model would be trained on the data points listed in the analysis section. I 
 I use `CountVectorizer()` instead of `TfidfVectorizer()` because TF-IDF would reduce the weights of those genres, licensors, etc. if they appeared a lot, which doesn't make sense. 
 
 ## Building the Cosine Similarity Matrix
+
 After this, I build a cosine similarity matrix that gives a sense of how anime could be similar based on the model and how similar each anime is to each other. 
-
-
-
-
-
-
 """
 
 def build_tfidf_matrix(df):
@@ -198,9 +164,10 @@ def build_cossim(df):
   return cossim, indices
 cossim, indices = build_cossim(new_df)
 
-"""## Final Processing 
+"""
+# Final Processing 
 
-`get_recommendations()` is the function that builds all the fun stuff for the user to see: their list of recommended anime. 
+get_recommendations() is the function that builds all the fun stuff for the user to see: their list of recommended anime. 
 """
 
 def get_recommendations(title, n=10, nsfw=False, prefer_finished=False, cossim=cossim, debug=False):
@@ -270,7 +237,8 @@ def recommend():
 
 recommend()
 
-"""# Conclusion
+"""
+# Conclusion
 
 The output list of recommendations is very useful and valuable. Instead of only recommending shows from the same series, it also recommends similar anime based on genre, description, studio, and licensors. 
 
@@ -293,38 +261,4 @@ recommender-systems-python
 - https://www.kaggle.com/canggih/anime-data-score-staff-synopsis-and-genre/data/
 - https://www.myanimelist.net
 - https://heartbeat.fritz.ai/recommender-systems-with-python-part-i-content-based-filtering-5df4940bd831
-
----
-# Submission Guidelines (keep this section here)
----
-
-
-When you are ready to submit your project, part of the submission process will be to register your notebook for reviewing.  
-
-You will also receive the links and instructions to do the peer reviews.
-
-Please review the metadata:
-"""
-
-def get_metadata():
-  meta = {
-          "title": PROJECT_TITLE, # keep this as is
-          "nb_id": NOTEBOOK_ID,   # keep this as is
-          "data" :["http://drive.google.com/uc?export=download&id=1rj1wC5FyELyaigmIYkzxZuhNLs39rFJL"]
-          # permissions
-          # do you give the instructor the permission to copy this project
-          # and allow others to view it in the class gallery?
-          "allow_gallery": True,
-          
-          # if your project is made viewable to others,
-          # do you want to include your name (first/last)?
-          "allow_name_release": True
-          }
-  return meta
-
-"""Specific instructions will come for what to submit for the various milestones.
-
-If necessary, you can download the Python version of this notebook by using the `File->Download .py` as well as the notebook itself `File->Download .ipynb`.
-
-
 """
